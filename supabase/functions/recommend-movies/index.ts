@@ -19,21 +19,20 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+    if (!GOOGLE_AI_API_KEY) throw new Error("GOOGLE_AI_API_KEY is not configured");
 
-    // Generate embedding using Gemini embedding model via Lovable AI gateway
-    const embeddingResponse = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-embedding-001",
-        input: description,
-      }),
-    });
+    // Generate embedding using Gemini embedding model directly
+    const embeddingResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GOOGLE_AI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: { parts: [{ text: description }] },
+        }),
+      }
+    );
 
     if (!embeddingResponse.ok) {
       const errorText = await embeddingResponse.text();
@@ -43,16 +42,11 @@ serve(async (req) => {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (embeddingResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required. Please add credits." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       throw new Error(`Embedding generation failed: ${embeddingResponse.status}`);
     }
 
     const embeddingData = await embeddingResponse.json();
-    const embedding = embeddingData.data?.[0]?.embedding;
+    const embedding = embeddingData.embedding?.values;
     if (!embedding) throw new Error("No embedding returned");
 
     // Format as pgvector string
