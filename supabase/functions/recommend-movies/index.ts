@@ -30,6 +30,7 @@ serve(async (req) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: { parts: [{ text: description }] },
+          output_dimensionality: 768,
         }),
       }
     );
