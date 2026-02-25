@@ -55,6 +55,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      match_movies: {
+        Args: { match_count: number; query_embedding: string }
+        Returns: {
+          id: number
+          similarity: number
+        }[]
+      }
       seed_imdb_from_csv: { Args: { csv_text: string }; Returns: number }
     }
     Enums: {
