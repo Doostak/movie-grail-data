@@ -1,1 +1,4 @@
 project_id = "emzjnyxmnngwpxkgiory"
+
+[functions.recommend-movies]
+verify_jwt = false
