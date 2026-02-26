@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Star, Film, Plus } from "lucide-react";
+import { Loader2, Star, Film, Plus, ThumbsUp, ThumbsDown } from "lucide-react";
 import MovieRatingInput, { type RatedMovie } from "@/components/MovieRatingInput";
 
 interface Movie {
@@ -24,6 +24,11 @@ interface Movie {
   explanation: string | null;
 }
 
+interface Feedback {
+  title: string;
+  genres: string[];
+}
+
 const DEFAULT_MOVIE: RatedMovie = { title: "", rating: 5 };
 const MIN_MOVIES = 3;
 const MAX_MOVIES = 7;
@@ -37,6 +42,8 @@ const Index = () => {
   const [matchCount, setMatchCount] = useState(5);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [moreLike, setMoreLike] = useState<Feedback[]>([]);
+  const [lessLike, setLessLike] = useState<Feedback[]>([]);
   const { toast } = useToast();
 
   const updateMovie = (index: number, value: RatedMovie) => {
@@ -58,29 +65,42 @@ const Index = () => {
     matchCount >= 1 &&
     matchCount <= 20;
 
-  const handleRecommend = async () => {
-    setIsLoading(true);
-    setMovies([]);
-    try {
-      const payload = {
+  const buildPayload = useCallback(
+    (extraMoreLike: Feedback[], extraLessLike: Feedback[]) => {
+      const moreLikeText = extraMoreLike
+        .map((f) => `${f.title} (${f.genres.join(", ")})`)
+        .join("; ");
+      const lessLikeText = extraLessLike
+        .map((f) => `${f.title} (${f.genres.join(", ")})`)
+        .join("; ");
+
+      const combinedLikes = [likes.trim(), moreLikeText].filter(Boolean).join(". ");
+      const combinedDislikes = [dislikes.trim(), lessLikeText].filter(Boolean).join(". ");
+
+      return {
         ratings: ratedMovies.map((m) => ({
           title: m.title.trim(),
           rating: m.rating,
           ...(m.description ? { description: m.description.trim() } : {}),
         })),
-        ...(likes.trim() ? { likes: likes.trim() } : {}),
-        ...(dislikes.trim() ? { dislikes: dislikes.trim() } : {}),
+        ...(combinedLikes ? { likes: combinedLikes } : {}),
+        ...(combinedDislikes ? { dislikes: combinedDislikes } : {}),
         matchCount,
       };
+    },
+    [ratedMovies, likes, dislikes, matchCount]
+  );
 
+  const runRecommendation = async (payload: ReturnType<typeof buildPayload>) => {
+    setIsLoading(true);
+    setMovies([]);
+    try {
       const { data, error } = await supabase.functions.invoke("recommend-movies", {
         body: payload,
       });
-
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      setMovies(data.recommendations ?? data.movies ?? []);
+      setMovies(data.recommendations ?? []);
     } catch (e: any) {
       console.error(e);
       toast({
@@ -92,6 +112,26 @@ const Index = () => {
       setIsLoading(false);
     }
   };
+
+  const handleRecommend = () => {
+    setMoreLike([]);
+    setLessLike([]);
+    runRecommendation(buildPayload([], []));
+  };
+
+  const handleFeedback = (movie: Movie, type: "more" | "less") => {
+    const feedback: Feedback = { title: movie.movie_title, genres: movie.genres };
+    const nextMore = type === "more" ? [...moreLike, feedback] : moreLike;
+    const nextLess = type === "less" ? [...lessLike, feedback] : lessLike;
+    setMoreLike(nextMore);
+    setLessLike(nextLess);
+    runRecommendation(buildPayload(nextMore, nextLess));
+  };
+
+  const feedbackTitles = new Set([
+    ...moreLike.map((f) => f.title),
+    ...lessLike.map((f) => f.title),
+  ]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -171,6 +211,22 @@ const Index = () => {
           </CardContent>
         </Card>
 
+        {/* Feedback chips */}
+        {(moreLike.length > 0 || lessLike.length > 0) && (
+          <div className="flex flex-wrap gap-2">
+            {moreLike.map((f) => (
+              <Badge key={`more-${f.title}`} variant="default" className="text-xs">
+                <ThumbsUp className="h-3 w-3 mr-1" /> {f.title}
+              </Badge>
+            ))}
+            {lessLike.map((f) => (
+              <Badge key={`less-${f.title}`} variant="destructive" className="text-xs">
+                <ThumbsDown className="h-3 w-3 mr-1" /> {f.title}
+              </Badge>
+            ))}
+          </div>
+        )}
+
         {/* Results */}
         {movies.length > 0 && (
           <div className="space-y-4">
@@ -220,9 +276,35 @@ const Index = () => {
                       {movie.overview && (
                         <p className="text-sm text-muted-foreground line-clamp-2">{movie.overview}</p>
                       )}
-                      <p className="text-xs text-muted-foreground">
-                        Score: {(movie.final_score * 100).toFixed(1)}% · Similarity: {(movie.similarity * 100).toFixed(1)}%
-                      </p>
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <p className="text-xs text-muted-foreground">
+                          Score: {(movie.final_score * 100).toFixed(1)}% · Similarity: {(movie.similarity * 100).toFixed(1)}%
+                        </p>
+                        {!feedbackTitles.has(movie.movie_title) && (
+                          <div className="flex gap-1 flex-shrink-0">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={isLoading}
+                              onClick={() => handleFeedback(movie, "more")}
+                              className="h-7 px-2 text-xs"
+                            >
+                              <ThumbsUp className="h-3.5 w-3.5 mr-1" />
+                              More like this
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={isLoading}
+                              onClick={() => handleFeedback(movie, "less")}
+                              className="h-7 px-2 text-xs"
+                            >
+                              <ThumbsDown className="h-3.5 w-3.5 mr-1" />
+                              Less like this
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
