@@ -214,11 +214,14 @@ const Index = () => {
                           </Badge>
                         ))}
                       </div>
+                      {movie.explanation && (
+                        <p className="text-sm text-primary/80 italic">{movie.explanation}</p>
+                      )}
                       {movie.overview && (
                         <p className="text-sm text-muted-foreground line-clamp-2">{movie.overview}</p>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        Similarity: {(movie.similarity * 100).toFixed(1)}%
+                        Score: {(movie.final_score * 100).toFixed(1)}% · Similarity: {(movie.similarity * 100).toFixed(1)}%
                       </p>
                     </div>
                   </CardContent>
