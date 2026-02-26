@@ -78,7 +78,7 @@ const Index = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setMovies(data.movies ?? []);
+      setMovies(data.recommendations ?? data.movies ?? []);
     } catch (e: any) {
       console.error(e);
       toast({
