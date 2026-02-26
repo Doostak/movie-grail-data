@@ -124,7 +124,18 @@ const MovieRatingInput = ({ index, value, onChange, onRemove }: Props) => {
       <div className="space-y-1">
         <div className="flex items-center justify-between">
           <Label className="text-xs text-muted-foreground">Rating</Label>
-          <span className="text-sm font-semibold text-foreground">{value.rating}/10</span>
+          <span
+            className="text-sm font-semibold"
+            style={{
+              color: value.rating <= 3
+                ? `hsl(0, 80%, 55%)`
+                : value.rating <= 6
+                ? `hsl(${(value.rating - 3) * 15}, 90%, 50%)`
+                : `hsl(${90 + (value.rating - 7) * 10}, 70%, 45%)`,
+            }}
+          >
+            {value.rating}/10
+          </span>
         </div>
         <Slider
           min={1}
