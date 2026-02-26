@@ -30,7 +30,7 @@ interface Feedback {
 }
 
 const DEFAULT_MOVIE: RatedMovie = { title: "", rating: 5 };
-const MIN_MOVIES = 3;
+const MIN_MOVIES = 2;
 const MAX_MOVIES = 7;
 
 const Index = () => {
