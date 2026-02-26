@@ -194,7 +194,69 @@ serve(async (req) => {
     }
 
     // Clean up internal fields
-    const recommendations = diverseResults.map(({ _primaryGenre, ...rest }) => rest);
+    const candidates = diverseResults.map(({ _primaryGenre, ...rest }) => rest);
+
+    // Generate explanations via LLM
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const candidateSummaries = candidates.map((m: any) => ({
+      id: m.id,
+      movie_title: m.movie_title,
+      genres: m.genres,
+      overview: m.overview,
+    }));
+
+    const llmPrompt = `User taste profile:\n${tasteText}\n\nCandidate movies:\n${JSON.stringify(candidateSummaries, null, 2)}\n\nFor each candidate movie, write a 1–2 sentence explanation of why it matches the user's preferences. Return a JSON array of objects with "id" and "explanation" fields only.`;
+
+    const llmResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: "You are a movie recommendation assistant. Explain briefly (1–2 sentences per movie) why each recommended movie matches the user's preferences. Only use information from the provided candidate movies. Do not invent facts. Respond with a JSON array of objects with \"id\" (number) and \"explanation\" (string) fields. No markdown, no code fences, just raw JSON.",
+          },
+          { role: "user", content: llmPrompt },
+        ],
+      }),
+    });
+
+    let explanationMap = new Map<number, string>();
+    if (llmResponse.ok) {
+      try {
+        const llmData = await llmResponse.json();
+        const raw = llmData.choices?.[0]?.message?.content ?? "";
+        const cleaned = raw.replace(/```json\n?|```\n?/g, "").trim();
+        const explanations: { id: number; explanation: string }[] = JSON.parse(cleaned);
+        for (const e of explanations) {
+          explanationMap.set(e.id, e.explanation);
+        }
+      } catch (err) {
+        console.error("Failed to parse LLM explanations:", err);
+      }
+    } else {
+      console.error("LLM call failed:", llmResponse.status, await llmResponse.text());
+    }
+
+    const recommendations = candidates.map((m: any) => ({
+      id: m.id,
+      movie_title: m.movie_title,
+      genres: m.genres,
+      imdb_rating: m.imdb_rating,
+      overview: m.overview,
+      director: m.director,
+      released_year: m.released_year,
+      poster_link: m.poster_link,
+      similarity: m.similarity,
+      final_score: m.final_score,
+      explanation: explanationMap.get(m.id) ?? null,
+    }));
 
     return new Response(JSON.stringify({ recommendations }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
