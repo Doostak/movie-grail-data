@@ -144,17 +144,59 @@ serve(async (req) => {
 
     if (moviesError) throw moviesError;
 
-    // Merge similarity, filter out already-rated movies, sort and take top matchCount
-    const results = matchedMovies
-      .map((movie: any) => ({
-        ...movie,
-        similarity: matches.find((m: any) => m.id === movie.id)?.similarity ?? 0,
-      }))
-      .filter((movie: any) => !ratedTitlesLower.has(movie.movie_title.toLowerCase()))
-      .sort((a: any, b: any) => b.similarity - a.similarity)
-      .slice(0, matchCount);
+    // Build set of genres the user strongly liked for rating_affinity
+    const likedGenres = new Map<string, number>(); // genre -> max rating
+    for (const r of ratings) {
+      if (r.rating >= 8) {
+        const found = dbMap.get(r.title.toLowerCase());
+        if (found && Array.isArray(found.genres)) {
+          for (const g of found.genres) {
+            likedGenres.set(g, Math.max(likedGenres.get(g) ?? 0, r.rating));
+          }
+        }
+      }
+    }
 
-    return new Response(JSON.stringify({ recommendations: results }), {
+    // Merge similarity, compute final_score, filter rated movies
+    const scored = matchedMovies
+      .map((movie: any) => {
+        const similarity = matches.find((m: any) => m.id === movie.id)?.similarity ?? 0;
+        const normalizedImdb = (movie.imdb_rating ?? 5) / 10;
+
+        // rating_affinity: how well this movie's genres overlap with strongly-liked genres
+        const genres: string[] = Array.isArray(movie.genres) ? movie.genres : [];
+        let affinity = 0;
+        if (likedGenres.size > 0 && genres.length > 0) {
+          let genreHits = 0;
+          for (const g of genres) {
+            if (likedGenres.has(g)) genreHits++;
+          }
+          affinity = genreHits / genres.length;
+        }
+
+        const finalScore = 0.6 * similarity + 0.2 * normalizedImdb + 0.2 * affinity;
+
+        return { ...movie, similarity, final_score: finalScore, _primaryGenre: genres[0] ?? "Unknown" };
+      })
+      .filter((movie: any) => !ratedTitlesLower.has(movie.movie_title.toLowerCase()))
+      .sort((a: any, b: any) => b.final_score - a.final_score);
+
+    // Diversity control: max 2 per primary genre
+    const genreCounts = new Map<string, number>();
+    const diverseResults: any[] = [];
+    for (const movie of scored) {
+      const g = movie._primaryGenre;
+      const count = genreCounts.get(g) ?? 0;
+      if (count >= 2) continue;
+      genreCounts.set(g, count + 1);
+      diverseResults.push(movie);
+      if (diverseResults.length >= matchCount) break;
+    }
+
+    // Clean up internal fields
+    const recommendations = diverseResults.map(({ _primaryGenre, ...rest }) => rest);
+
+    return new Response(JSON.stringify({ recommendations }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
