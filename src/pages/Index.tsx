@@ -20,6 +20,8 @@ interface Movie {
   released_year: number | null;
   poster_link: string | null;
   similarity: number;
+  final_score: number;
+  explanation: string | null;
 }
 
 const DEFAULT_MOVIE: RatedMovie = { title: "", rating: 5 };
