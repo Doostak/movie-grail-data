@@ -17,6 +17,7 @@ interface RequestBody {
   ratings: RatingInput[];
   likes?: string;
   dislikes?: string;
+  excludeTitles?: string[];
   matchCount?: number;
 }
 
@@ -24,7 +25,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { ratings, likes, dislikes, matchCount = 10 }: RequestBody = await req.json();
+    const { ratings, likes, dislikes, excludeTitles = [], matchCount = 10 }: RequestBody = await req.json();
 
     if (!ratings || !Array.isArray(ratings) || ratings.length === 0) {
       return new Response(JSON.stringify({ error: "ratings array is required" }), {
@@ -59,6 +60,7 @@ serve(async (req) => {
     const neutral: string[] = [];
     const dislikesList: string[] = [];
     const ratedTitlesLower = new Set<string>();
+    const excludeTitlesLower = new Set<string>(excludeTitles.map((t) => t.toLowerCase()));
 
     for (const r of ratings) {
       ratedTitlesLower.add(r.title.toLowerCase());
@@ -178,7 +180,10 @@ serve(async (req) => {
 
         return { ...movie, similarity, final_score: finalScore, _primaryGenre: genres[0] ?? "Unknown" };
       })
-      .filter((movie: any) => !ratedTitlesLower.has(movie.movie_title.toLowerCase()))
+      .filter((movie: any) => {
+        const lower = movie.movie_title.toLowerCase();
+        return !ratedTitlesLower.has(lower) && !excludeTitlesLower.has(lower);
+      })
       .sort((a: any, b: any) => b.final_score - a.final_score);
 
     // Diversity control: max 2 per primary genre
