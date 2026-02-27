@@ -168,48 +168,66 @@ const Index = () => {
           )}
         </section>
 
-        {/* Global preferences */}
-        <Card>
-          <CardContent className="pt-6 space-y-4">
+        {/* Global preferences — no card wrapper, side by side */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Preferences</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="likes">What did you generally like about these movies? (optional)</Label>
+              <Label htmlFor="likes" className="flex items-center gap-1.5">
+                <ThumbsUp className="h-3.5 w-3.5 text-primary" />
+                What do you enjoy?
+              </Label>
               <Textarea
                 id="likes"
-                placeholder="e.g. I love unexpected plot twists, strong character development..."
+                placeholder="e.g. Unexpected plot twists, strong character development..."
                 value={likes}
                 onChange={(e) => setLikes(e.target.value)}
-                className="min-h-[70px]"
+                className="min-h-[80px]"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dislikes">What would you like less of? (optional)</Label>
+              <Label htmlFor="dislikes" className="flex items-center gap-1.5">
+                <ThumbsDown className="h-3.5 w-3.5 text-destructive" />
+                What do you dislike?
+              </Label>
               <Textarea
                 id="dislikes"
                 placeholder="e.g. Too much romance, slow pacing..."
                 value={dislikes}
                 onChange={(e) => setDislikes(e.target.value)}
-                className="min-h-[70px]"
+                className="min-h-[80px]"
               />
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="space-y-2 w-full sm:w-48">
-                <Label htmlFor="match-count">Number of Recommendations</Label>
-                <Input
-                  id="match-count"
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={matchCount}
-                  onChange={(e) => setMatchCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
-                />
-              </div>
-              <Button onClick={handleRecommend} disabled={!canSubmit || isLoading} className="w-full sm:w-auto">
-                {isLoading && <Loader2 className="animate-spin" />}
-                Recommend
-              </Button>
+          </div>
+
+          <div className="flex items-end gap-4">
+            <div className="space-y-2 w-48">
+              <Label htmlFor="match-count">Results</Label>
+              <Input
+                id="match-count"
+                type="number"
+                min={1}
+                max={20}
+                value={matchCount}
+                onChange={(e) => setMatchCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
+
+        {/* Global Recommend button */}
+        <div className="sticky bottom-4 z-40">
+          <Button
+            onClick={handleRecommend}
+            disabled={!canSubmit || isLoading}
+            size="lg"
+            className="w-full text-base font-semibold shadow-[0_0_25px_-5px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_35px_-5px_hsl(var(--primary)/0.6)] transition-shadow"
+          >
+            {isLoading && <Loader2 className="animate-spin" />}
+            <Film className="h-5 w-5" />
+            Get Recommendations
+          </Button>
+        </div>
 
         {/* Feedback chips */}
         {(moreLike.length > 0 || lessLike.length > 0) && (
