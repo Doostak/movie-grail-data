@@ -17,6 +17,7 @@ interface RequestBody {
   ratings: RatingInput[];
   likes?: string;
   dislikes?: string;
+  excludeTitles?: string[];
   matchCount?: number;
 }
 

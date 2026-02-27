@@ -81,6 +81,11 @@ const Index = () => {
       const combinedLikes = [likes.trim(), moreLikeText].filter(Boolean).join(". ");
       const combinedDislikes = [dislikes.trim(), lessLikeText].filter(Boolean).join(". ");
 
+      const excludeTitles = [
+        ...extraMoreLike.map((f) => f.title),
+        ...extraLessLike.map((f) => f.title),
+      ];
+
       return {
         ratings: ratedMovies.map((m) => ({
           title: m.title.trim(),
@@ -89,6 +94,7 @@ const Index = () => {
         })),
         ...(combinedLikes ? { likes: combinedLikes } : {}),
         ...(combinedDislikes ? { dislikes: combinedDislikes } : {}),
+        ...(excludeTitles.length > 0 ? { excludeTitles } : {}),
         matchCount,
       };
     },
