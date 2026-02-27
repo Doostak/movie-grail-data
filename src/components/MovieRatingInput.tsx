@@ -71,9 +71,14 @@ const MovieRatingInput = ({ index, value, onChange, onRemove }: Props) => {
     if (exactMatch) {
       setTitleFound(true);
       setMovieDetails(exactMatch);
+      onChange({ ...value, title: value.title, description: undefined });
     } else {
-      setTitleFound(titles.length > 0 ? null : false);
+      const notFound = titles.length === 0;
+      setTitleFound(notFound ? false : null);
       setMovieDetails(null);
+      if (notFound && value.description === undefined) {
+        onChange({ ...value, title: value.title, description: "" });
+      }
     }
     setSearching(false);
   };

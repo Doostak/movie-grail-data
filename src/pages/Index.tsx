@@ -61,7 +61,11 @@ const Index = () => {
   };
 
   const canSubmit =
-    ratedMovies.every((m) => m.title.trim() !== "") &&
+    ratedMovies.every(
+      (m) =>
+        m.title.trim() !== "" &&
+        (m.description === undefined || m.description.trim() !== "")
+    ) &&
     matchCount >= 1 &&
     matchCount <= 20;
 
