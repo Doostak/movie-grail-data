@@ -56,9 +56,7 @@ const MovieRatingInput = ({ index, value, onChange, onRemove }: Props) => {
     setSuggestions(titles);
     setShowSuggestions(titles.length > 0);
 
-    const exactMatch = titles.some(
-      (t) => t.toLowerCase() === query.toLowerCase()
-    );
+    const exactMatch = titles.some((t) => t.toLowerCase() === query.toLowerCase());
     setTitleFound(exactMatch);
     setSearching(false);
   };
@@ -81,17 +79,9 @@ const MovieRatingInput = ({ index, value, onChange, onRemove }: Props) => {
   return (
     <div ref={containerRef} className="rounded-lg border border-border bg-card p-4 space-y-3 relative">
       <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium text-foreground">
-          Movie {index + 1}
-        </Label>
+        <Label className="text-sm font-medium text-foreground">Movie {index + 1}</Label>
         {onRemove && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={onRemove}
-          >
+          <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={onRemove}>
             <X className="h-4 w-4" />
           </Button>
         )}
@@ -127,11 +117,12 @@ const MovieRatingInput = ({ index, value, onChange, onRemove }: Props) => {
           <span
             className="text-sm font-semibold"
             style={{
-              color: value.rating <= 3
-                ? `hsl(0, 80%, 55%)`
-                : value.rating <= 6
-                ? `hsl(${(value.rating - 3) * 15}, 90%, 50%)`
-                : `hsl(${90 + (value.rating - 7) * 10}, 70%, 45%)`,
+              color:
+                value.rating <= 3
+                  ? `hsl(0, 80%, 55%)`
+                  : value.rating <= 6
+                    ? `hsl(${(value.rating - 3) * 15}, 90%, 50%)`
+                    : `hsl(${90 + (value.rating - 7) * 10}, 70%, 45%)`,
             }}
           >
             {value.rating}/10
@@ -150,7 +141,7 @@ const MovieRatingInput = ({ index, value, onChange, onRemove }: Props) => {
       {needsDescription && (
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">
-            Title not found — please describe this movie briefly (required)
+            I haven't watched this movie yet — can you describe it briefly (required)
           </Label>
           <Textarea
             placeholder="e.g. A sci-fi thriller about time loops set in a space station..."
