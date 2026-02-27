@@ -60,6 +60,7 @@ serve(async (req) => {
     const neutral: string[] = [];
     const dislikesList: string[] = [];
     const ratedTitlesLower = new Set<string>();
+    const excludeTitlesLower = new Set<string>(excludeTitles.map((t) => t.toLowerCase()));
 
     for (const r of ratings) {
       ratedTitlesLower.add(r.title.toLowerCase());
