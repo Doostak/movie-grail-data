@@ -25,7 +25,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { ratings, likes, dislikes, matchCount = 10 }: RequestBody = await req.json();
+    const { ratings, likes, dislikes, excludeTitles = [], matchCount = 10 }: RequestBody = await req.json();
 
     if (!ratings || !Array.isArray(ratings) || ratings.length === 0) {
       return new Response(JSON.stringify({ error: "ratings array is required" }), {
