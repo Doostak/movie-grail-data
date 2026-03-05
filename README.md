@@ -1,73 +1,69 @@
-# Welcome to your Lovable project
+# Project Title
 
-## Project info
+AI Movie Recommender Assistant
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Problem
 
-## How can I edit this code?
+Most AI recommenders rely on vague prompts and hallucinated suggestions.  
+This project explores a hybrid recommendation architecture combining structured user signals with semantic retrieval.
 
-There are several ways of editing your application.
+## Solution
 
-**Use Lovable**
+Users rate several movies and optionally describe preferences.  
+The system builds a taste profile embedding and retrieves candidates using vector similarity across the IMDB Top 1000 dataset.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Architecture
 
-Changes made via Lovable will be committed automatically to this repo.
+User Input  
+↓  
+Taste Profile Builder  
+↓  
+Embedding Generation  
+↓  
+Vector Search (pgvector)  
+↓  
+Candidate Retrieval  
+↓  
+Hybrid Ranking  
+↓  
+Diversity Control  
+↓  
+LLM Explanation Layer
 
-**Use your preferred IDE**
+## Key Features
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Hybrid recommendation engine
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Support for custom movie descriptions
 
-Follow these steps:
+- Vector search using embeddings
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- Multi-factor ranking
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Explainable recommendations
 
-# Step 3: Install the necessary dependencies.
-npm i
+- Feedback loop for refinement
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## Technologies
 
-**Edit a file directly in GitHub**
+- React + Lovable
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Supabase
 
-**Use GitHub Codespaces**
+- pgvector
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Gemini/OpenAI APIs
 
-## What technologies are used for this project?
+- Edge Functions
 
-This project is built with:
+## Future Improvements
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- Collaborative filtering
 
-## How can I deploy this project?
+- Learning-to-rank models
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+- Offline evaluation metrics (Precision@K)
 
-## Can I connect a custom domain to my Lovable project?
+## Live Demo
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**URL**: https://movie-grail-data.lovable.app/
